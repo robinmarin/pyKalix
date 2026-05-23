@@ -86,9 +86,10 @@ def _find_bundled() -> Path | None:
     # Prefer the modern traversal API
     try:
         bin_dir = _resource_files("pykalix") / "bin"
-        candidate = bin_dir / "kalix"
-        if candidate.is_file():
-            return Path(str(candidate))
+        for name in ("kalix", "kalix.exe"):
+            candidate = bin_dir / name
+            if candidate.is_file():
+                return Path(str(candidate))
     except Exception:
         pass
 
@@ -96,9 +97,10 @@ def _find_bundled() -> Path | None:
     # (covers editable installs and some edge cases)
     try:
         this_dir = Path(__file__).resolve().parent
-        candidate = this_dir / "bin" / "kalix"
-        if candidate.is_file():
-            return candidate
+        for name in ("kalix", "kalix.exe"):
+            candidate = this_dir / "bin" / name
+            if candidate.is_file():
+                return candidate
     except Exception:
         pass
 
