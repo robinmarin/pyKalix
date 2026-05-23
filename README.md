@@ -123,8 +123,26 @@ Binary discovery order:
 ## Requirements
 
 - Python >= 3.10
-- Pre-built wheels available for macOS, Linux, and Windows.
-  If your platform isn't covered: `cargo install kalix`
+- Pre-built wheels planned for macOS, Linux, and Windows.
+  Currently: `cargo install kalix` then `pip install pykalix`
+
+## Multi-platform release (next steps)
+
+The CI workflow (`.github/workflows/release.yml`) builds platform wheels
+for macOS arm64/x86_64, Linux x86_64/arm64, and Windows x86_64.  Each
+wheel bundles the compiled `kalix` binary — no Rust toolchain needed.
+
+To ship:
+
+1. **Register the name on PyPI** — create the project at
+   https://pypi.org/manage/projects/ (one-time)
+2. **Configure trusted publishing** — add a publisher on PyPI:
+   GitHub org `robinmarin`, repo `pyKalix`, workflow `release.yml`.
+   No API token needed.
+3. **Tag & push**: `git tag v0.2.1 && git push --tags`
+
+After those three steps, `pip install pykalix` automatically pulls the
+right platform wheel.
 
 ## License
 
