@@ -11,6 +11,7 @@ from collections.abc import Iterator
 from contextlib import suppress
 from typing import Any
 
+from ._binary import find_kalix
 from ._config import KalixConfig
 from ._process import KalixProcess
 from ._types import LiveResult, ReadyEvent
@@ -34,8 +35,9 @@ class KalixFilter:
             audit trail with complete covariance matrices).
         on_error: ``"skip"`` (default) to silently skip malformed input
             lines, or ``"halt"`` to exit the process on error.
-        binary: Name or path of the ``kalix`` binary.  Defaults to
-            ``"kalix"`` (looked up on ``PATH``).
+        binary: Name or path of the ``kalix`` binary.  If ``None`` (default),
+            auto-discovers: checks the ``KALIX_BINARY`` env var, the bundled
+            binary in the wheel, and ``PATH``.
 
     Example:
 
@@ -50,16 +52,25 @@ class KalixFilter:
         config: str | KalixConfig,
         mode: str = "live",
         on_error: str = "skip",
-        binary: str = "kalix",
+        binary: str | None = None,
     ) -> None:
         if mode not in ("live", "backtest"):
             raise ValueError(f"mode must be 'live' or 'backtest', got '{mode}'")
         if on_error not in ("skip", "halt"):
             raise ValueError(f"on_error must be 'skip' or 'halt', got '{on_error}'")
 
+        resolved = find_kalix(binary)
+        if resolved is None:
+            raise RuntimeError(
+                "kalix binary not found. "
+                "Install it with: cargo install kalix, "
+                "or set the KALIX_BINARY environment variable, "
+                "or pass binary='/path/to/kalix' to KalixFilter()."
+            )
+
         self._mode = mode
         self._on_error = on_error
-        self._binary = binary
+        self._binary = resolved
         self._temp_config: str | None = None
         self._config_path: str
 
@@ -255,7 +266,7 @@ class KalixFilter:
         config: KalixConfig,
         mode: str = "live",
         on_error: str = "skip",
-        binary: str = "kalix",
+        binary: str | None = None,
     ) -> KalixFilter:
         """Create a :class:`KalixFilter` from a :class:`KalixConfig` instance.
 

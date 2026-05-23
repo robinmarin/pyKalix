@@ -47,7 +47,7 @@ testpaths = ["tests"]
 timeout = 30
 
 [tool.setuptools.package-data]
-pykalix = ["py.typed"]
+pykalix = ["py.typed", "bin/kalix"]
 
 [tool.ruff]
 src = ["src", "tests", "examples"]

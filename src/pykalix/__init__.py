@@ -16,6 +16,7 @@ Quick start::
 
 from __future__ import annotations
 
+from ._binary import find_kalix
 from ._config import KalixConfig
 from ._kalix import KalixFilter
 from ._types import BacktestResult, LiveResult, ReadyEvent, SummaryEvent
@@ -28,4 +29,5 @@ __all__ = [
     "LiveResult",
     "ReadyEvent",
     "SummaryEvent",
+    "find_kalix",
 ]

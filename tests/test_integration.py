@@ -6,17 +6,16 @@ installed on PATH.
 
 import json
 import os
-import shutil
 import tempfile
 
 import pytest
 
-from pykalix import KalixConfig, KalixFilter, LiveResult
+from pykalix import KalixConfig, KalixFilter, LiveResult, find_kalix
 
-# Check if kalix binary is available
-_kalix_binary = os.environ.get("KALIX_BINARY", "kalix")
+# Check if kalix binary is available (bundled, PATH, or KALIX_BINARY env)
+_kalix_binary = find_kalix(os.environ.get("KALIX_BINARY"))
 
-_HAS_KALIX = shutil.which(_kalix_binary) is not None
+_HAS_KALIX = _kalix_binary is not None
 
 pytestmark = pytest.mark.skipif(not _HAS_KALIX, reason="kalix binary not found")
 

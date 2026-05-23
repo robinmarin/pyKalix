@@ -7,19 +7,25 @@ appropriate filter (standard KF or EKF).
 
 `pykalix` is a thin Python wrapper that spawns the `kalix` binary as a subprocess and
 communicates via JSON over stdin/stdout — the same bridge documented in the kalix
-README. No Rust compilation or FFI needed at the Python level.
+README.
+
+Platform-specific wheels include a pre-compiled `kalix` binary.  No Rust toolchain
+required.
 
 ## Installation
 
 ```bash
-# 1. Install the kalix binary (requires Rust toolchain)
-cargo install kalix
-
-# 2. Install the Python wrapper
 pip install pykalix
 ```
 
-Make sure `kalix` is on your `PATH` after `cargo install`.
+The package auto-discovers the `kalix` binary: checks the bundled version in the wheel,
+then the `KALIX_BINARY` environment variable, then `PATH`.
+
+If a pre-built wheel isn't available for your platform, install kalix manually:
+
+```bash
+cargo install kalix
+```
 
 ## Quick start
 
@@ -39,7 +45,7 @@ with KalixFilter(config="configs/trend_no_accel.toml", mode="live") as f:
     result = f.predict_only(t=1001.0, dt=1.0)
     print(f"predict-only: pos={result.x['pos']:.3f}")
 
-# ── Backtest mode — full audit trail ───────────────────────────────────
+# Backtest mode — full audit trail
 with KalixFilter(config="configs/trend_no_accel.toml", mode="backtest") as f:
     results = []
     for msg in f.stream_file("prices.jsonl"):
@@ -55,17 +61,17 @@ with KalixFilter(config="configs/trend_no_accel.toml", mode="backtest") as f:
 
 ```python
 KalixFilter(
-    config: str,              # Path to TOML config file
-    mode: str = "live",       # "live" or "backtest"
-    on_error: str = "skip",   # "skip" or "halt"
-    binary: str = "kalix",    # Path or name of kalix binary
+    config: str,                  # Path to TOML config file, or KalixConfig
+    mode: str = "live",           # "live" or "backtest"
+    on_error: str = "skip",       # "skip" or "halt"
+    binary: str | None = None,    # auto-discover (bundled > env > PATH)
 )
 ```
 
 Methods:
-- `step(t: float, dt: float, z: list[float]) -> LiveResult` — predict + update
-- `predict_only(t: float, dt: float) -> LiveResult` — predict only (no measurement)
-- `stream(input_path: str | None = None) -> Iterator[dict]` — stream results lazily
+- `step(t, dt, z) -> LiveResult` — predict + update
+- `predict_only(t, dt) -> LiveResult` — predict only (no measurement)
+- `stream_file(input_path) -> Iterator[dict]` — stream results lazily
 - `close()` — shut down the subprocess
 - Context manager support (`with KalixFilter(...) as f:`)
 
@@ -96,21 +102,29 @@ with KalixFilter.from_config(config, mode="live") as f:
 
 ## How it works
 
-`pykalix` spawns the `kalix` binary as a child process and talks to it over pipes:
+Platform-specific wheels include a compiled `kalix` binary (Rust) inside the package.
+`pykalix` spawns it as a child process and talks to it over pipes:
 
 ```
-Python ──[JSON lines]──▶ kalix stdin
-Python ◀──[JSON lines]──  kalix stdout
-                     kalix stderr ──▶ logged via Python's logging
+Python --[JSON lines]--> kalix stdin
+Python <--[JSON lines]--  kalix stdout
+                     kalix stderr --> logged via Python's logging
 ```
 
 The subprocess is fully managed: started on first interaction, cleaned up on `close()`
 or context-manager exit. A ready event is read automatically before any data is exchanged.
 
+Binary discovery order:
+1. User-supplied `binary=` parameter
+2. `KALIX_BINARY` environment variable
+3. Bundled binary in the wheel
+4. `kalix` on `PATH`
+
 ## Requirements
 
-- Python ≥ 3.10
-- `kalix` binary on `PATH` (install via `cargo install kalix`)
+- Python >= 3.10
+- Pre-built wheels available for macOS, Linux, and Windows.
+  If your platform isn't covered: `cargo install kalix`
 
 ## License
 
